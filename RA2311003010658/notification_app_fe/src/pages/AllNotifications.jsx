@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  Box, Typography, Card, CardContent, Chip,
-  Select, MenuItem, FormControl, InputLabel,
-  Pagination, CircularProgress, Badge
+  Box, Typography, Chip, Select, MenuItem,
+  FormControl, InputLabel, Pagination, CircularProgress
 } from '@mui/material'
 import { fetchNotifications } from '../api/notifications'
 import { Log } from '../middleware/logger'
@@ -19,7 +18,6 @@ function AllNotifications() {
   const [type, setType] = useState('')
   const [loading, setLoading] = useState(false)
   const [readIds, setReadIds] = useState(() => {
-    // load read notifications from localStorage
     const saved = localStorage.getItem('readIds')
     return saved ? JSON.parse(saved) : []
   })
@@ -30,7 +28,7 @@ function AllNotifications() {
 
   async function loadNotifications() {
     setLoading(true)
-    await Log('frontend', 'info', 'page', `loading all notifications page=${page} type=${type}`)
+    await Log('frontend', 'info', 'page', `loading page=${page} type=${type}`)
     const data = await fetchNotifications(page, 10, type)
     setNotifications(data)
     setLoading(false)
@@ -41,7 +39,6 @@ function AllNotifications() {
       const updated = [...readIds, id]
       setReadIds(updated)
       localStorage.setItem('readIds', JSON.stringify(updated))
-      Log('frontend', 'info', 'component', `notification ${id} marked as read`)
     }
   }
 
@@ -50,28 +47,21 @@ function AllNotifications() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5" fontWeight="bold">
-          All Notifications
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h6">All Notifications</Typography>
           {unreadCount > 0 && (
-            <Chip
-              label={`${unreadCount} unread`}
-              color="error"
-              size="small"
-              sx={{ ml: 1 }}
-            />
+            <Typography variant="caption" sx={{ bgcolor: '#d32f2f', color: 'white', px: 1, py: 0.3, borderRadius: 1 }}>
+              {unreadCount} unread
+            </Typography>
           )}
-        </Typography>
+        </Box>
 
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Filter by Type</InputLabel>
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Type</InputLabel>
           <Select
             value={type}
-            label="Filter by Type"
-            onChange={(e) => {
-              setType(e.target.value)
-              setPage(1)
-              Log('frontend', 'info', 'component', `filter changed to ${e.target.value}`)
-            }}
+            label="Type"
+            onChange={(e) => { setType(e.target.value); setPage(1) }}
           >
             <MenuItem value="">All</MenuItem>
             <MenuItem value="Placement">Placement</MenuItem>
@@ -83,52 +73,51 @@ function AllNotifications() {
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-          <CircularProgress />
+          <CircularProgress size={24} />
         </Box>
       ) : notifications.length === 0 ? (
-        <Typography color="text.secondary" textAlign="center" mt={5}>
+        <Typography color="text.secondary" mt={4} textAlign="center">
           No notifications found
         </Typography>
       ) : (
         notifications.map((notif) => {
           const isRead = readIds.includes(notif.ID)
           return (
-            <Card
+            <Box
               key={notif.ID}
               onClick={() => markAsRead(notif.ID)}
               sx={{
-                mb: 1.5,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                px: 2,
+                py: 1.5,
+                mb: 0.5,
                 cursor: 'pointer',
-                borderLeft: isRead ? '4px solid #ccc' : '4px solid #1a237e',
                 bgcolor: isRead ? '#fafafa' : '#fff',
-                transition: '0.2s',
-                '&:hover': { boxShadow: 3 }
+                borderBottom: '1px solid #eee',
+                borderLeft: isRead ? '3px solid #eee' : '3px solid #1a237e',
               }}
             >
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {!isRead && (
-                      <Box sx={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        bgcolor: '#1a237e', flexShrink: 0
-                      }} />
-                    )}
-                    <Typography fontWeight={isRead ? 'normal' : 'bold'}>
-                      {notif.Message}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={notif.Type}
-                    color={typeColors[notif.Type] || 'default'}
-                    size="small"
-                  />
-                </Box>
-                <Typography variant="caption" color="text.secondary" sx={{ ml: isRead ? 0 : 2 }}>
+              <Box>
+                <Typography
+                  variant="body2"
+                  fontWeight={isRead ? 'normal' : 'bold'}
+                  color={isRead ? 'text.secondary' : 'text.primary'}
+                >
+                  {notif.Message}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
                   {notif.Timestamp}
                 </Typography>
-              </CardContent>
-            </Card>
+              </Box>
+              <Chip
+                label={notif.Type}
+                color={typeColors[notif.Type] || 'default'}
+                size="small"
+                variant={isRead ? 'outlined' : 'filled'}
+              />
+            </Box>
           )
         })
       )}
@@ -138,7 +127,7 @@ function AllNotifications() {
           count={10}
           page={page}
           onChange={(e, val) => setPage(val)}
-          color="primary"
+          size="small"
         />
       </Box>
     </Box>
